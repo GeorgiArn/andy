@@ -2,13 +2,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int main(int argc, char** argv)
-{
-    pid_t pid = fork();
-    if (pid > 0) {
-        printf("Process id: %d\n", pid);
-        exit(0);
-    }
+#include "conf.h"
 
-    return 0;
+int main(int argc, char **argv)
+{
+    loadConfig(CONF_FILE);
+
+    exit(0);
 }

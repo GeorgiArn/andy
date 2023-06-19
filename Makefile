@@ -3,7 +3,9 @@ CODE=./src
 
 CC=gcc
 DEPFLAGS=-MP -MD
-CFLAGS=$(foreach D,$(CODE),-I $(D)) $(DEPFLAGS)
+CFLAGS=$(foreach D,$(CODE),-I $(D)) $(DEPFLAGS) -std=gnu11
+
+CFLAGS+=-D CONF_FILE="\"conf/andy.conf\""
 
 CFILES=$(foreach D,$(CODE),$(wildcard $(D)/*.c))
 OBJECTS=$(patsubst %.c,%.o,$(CFILES))
