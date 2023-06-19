@@ -28,7 +28,7 @@ typedef struct str_t
     size_t len;
 } str_t;
 
-static EntriesList* list = NULL;
+static EntriesList *list = NULL;
 
 static EntriesList *initializeEntriesList()
 {
@@ -103,7 +103,7 @@ static int parseEntry(unsigned char *row, str_t *key, str_t *val)
     return 0;
 }
 
-void loadConfig(const char *filename)
+static void loadConfig(const char *filename)
 {
     FILE *fd = fopen(filename, "r");
     EntriesList *list = initializeEntriesList();
@@ -146,7 +146,7 @@ void loadConfig(const char *filename)
     fclose(fd);
 }
 
-const char *getConfValue(const char *key)
+static const char *getEntry(const char *key)
 {
     if (list == NULL || list->head == NULL)
     {
@@ -154,16 +154,32 @@ const char *getConfValue(const char *key)
         exit(0);
     }
 
-    ConfigEntry* entry = list->head; 
+    ConfigEntry *entry = list->head;
 
     while (entry != NULL)
     {
         if (strcmp(entry->key, key) == 0)
             return entry->val;
-        
+
         entry = entry->next;
     }
 
     printf("Config entry for '%s' can't be found. \n", key);
     exit(0);
+}
+
+ServerConfig *initializeServerConfig(const char *filename)
+{
+    ServerConfig *config = (ServerConfig *)malloc(sizeof(ServerConfig));
+    if (config == NULL)
+    {
+        printf("Failed to allocate memory for server config. \n");
+        exit(0);
+    }
+
+    loadConfig(filename);
+    config->filename = filename;
+    config->getEntry = getEntry;
+
+    return config;
 }

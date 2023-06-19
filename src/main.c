@@ -6,9 +6,10 @@
 
 int main(int argc, char **argv)
 {
-    loadConfig(CONF_FILE);
+    ServerConfig* config = initializeServerConfig(CONF_FILE);
+    const char *port = config->getEntry("listen");
 
-    const char *port = getConfValue("listen");
+    printf("%s\n", config->filename);
     printf("%s\n", port);
 
     exit(0);

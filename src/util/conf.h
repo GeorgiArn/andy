@@ -1,12 +1,12 @@
 #ifndef CONF_H
 #define CONF_H
 
-typedef struct
+typedef struct ServerConfig
 {
-    char *(*getEntry)(const char *key);
+    const char* filename;
+    const char *(*getEntry)(const char *key);
 } ServerConfig;
 
-void loadConfig(const char *filename);
-const char *getConfValue(const char *key);
+ServerConfig *initializeServerConfig(const char *filename);
 
 #endif
