@@ -47,18 +47,10 @@ static EntriesList *initializeEntriesList()
 
 static int addEntry(ConfigEntry *entry)
 {
-    if (list->head == NULL)
-    {
-        list->head = entry;
-        list->length = 1;
-        return 0;
-    }
+    ConfigEntry *next = list->head;
+    list->head = entry;
+    entry->next = next;
 
-    ConfigEntry *prev = list->head;
-    while (prev->next != NULL)
-        prev = prev->next = NULL;
-
-    prev->next = entry;
     list->length++;
 
     return 0;
