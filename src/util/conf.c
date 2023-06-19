@@ -83,6 +83,15 @@ void loadConfig(const char *filename)
             exit(0);
         }
 
+        if (key.len > KEY_VALUE_LEN || val.len > KEY_VALUE_LEN)
+        {
+            printf("Config entry is too long. Maximum allowed key and value width: %d\n%.*s = %.*s \n",
+                   KEY_VALUE_LEN, (int)key.len, key.p, (int)val.len, val.p);
+
+            fclose(fd);
+            exit(0);
+        }
+
         memcpy(entry->key, key.p, key.len);
         memcpy(entry->val, val.p, val.len);
 
