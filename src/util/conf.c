@@ -12,13 +12,54 @@ typedef struct ConfigEntry
 {
     char key[KEY_VALUE_LEN];
     char val[KEY_VALUE_LEN];
+    struct ConfigEntry *next;
 } ConfigEntry;
+
+typedef struct EntriesList
+{
+    ConfigEntry *head;
+    size_t length;
+} EntriesList;
 
 typedef struct str_t
 {
     unsigned char *p;
     size_t len;
 } str_t;
+
+static EntriesList *initializeEntriesList()
+{
+    EntriesList *list = (EntriesList *)malloc(sizeof(EntriesList));
+    if (list == NULL)
+    {
+        printf("Failed to allocated memory for config entries. \n");
+        exit(0);
+    }
+
+    list->head = NULL;
+    list->length = 0;
+
+    return list;
+}
+
+static int addEntry(EntriesList *list, ConfigEntry *entry)
+{
+    if (list->head == NULL)
+    {
+        list->head = entry;
+        list->length = 1;
+        return 0;
+    }
+
+    ConfigEntry *prev = list->head;
+    while (prev->next != NULL)
+        prev = prev->next = NULL;
+
+    prev->next = entry;
+    list->length++;
+
+    return 0;
+}
 
 static int parseEntry(unsigned char *row, str_t *key, str_t *val)
 {
@@ -62,6 +103,7 @@ static int parseEntry(unsigned char *row, str_t *key, str_t *val)
 void loadConfig(const char *filename)
 {
     FILE *fd = fopen(filename, "r");
+    EntriesList *list = initializeEntriesList();
     if (fd == NULL)
     {
         printf("Configuration file can't be opened. \n");
@@ -95,7 +137,7 @@ void loadConfig(const char *filename)
         memcpy(entry->key, key.p, key.len);
         memcpy(entry->val, val.p, val.len);
 
-        printf("Key: %s, Value: %s \n", entry->key, entry->val);
+        addEntry(list, entry);
     }
 
     fclose(fd);
