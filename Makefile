@@ -1,5 +1,5 @@
 TARGET=andy
-CODE=./src
+CODE=./src ./src/util
 
 CC=gcc
 DEPFLAGS=-MP -MD
