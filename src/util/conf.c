@@ -7,6 +7,7 @@
 #include "conf.h"
 
 #define KEY_VALUE_LEN 128
+#define BUFFER_LEN (KEY_VALUE_LEN * 2) + 3
 
 typedef struct ConfigEntry
 {
@@ -110,8 +111,8 @@ void loadConfig(const char *filename)
         exit(0);
     }
 
-    char row[256];
-    while (fgets(row, 256, fd))
+    char row[BUFFER_LEN];
+    while (fgets(row, BUFFER_LEN, fd))
     {
         str_t key, val;
 
