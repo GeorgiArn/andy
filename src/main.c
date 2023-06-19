@@ -8,5 +8,8 @@ int main(int argc, char **argv)
 {
     loadConfig(CONF_FILE);
 
+    const char *port = getConfValue("listen");
+    printf("%s\n", port);
+
     exit(0);
 }

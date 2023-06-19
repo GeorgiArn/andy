@@ -7,5 +7,6 @@ typedef struct
 } ServerConfig;
 
 void loadConfig(const char *filename);
+const char *getConfValue(const char *key);
 
 #endif

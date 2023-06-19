@@ -28,9 +28,11 @@ typedef struct str_t
     size_t len;
 } str_t;
 
+static EntriesList* list = NULL;
+
 static EntriesList *initializeEntriesList()
 {
-    EntriesList *list = (EntriesList *)malloc(sizeof(EntriesList));
+    list = (EntriesList *)malloc(sizeof(EntriesList));
     if (list == NULL)
     {
         printf("Failed to allocated memory for config entries. \n");
@@ -43,7 +45,7 @@ static EntriesList *initializeEntriesList()
     return list;
 }
 
-static int addEntry(EntriesList *list, ConfigEntry *entry)
+static int addEntry(ConfigEntry *entry)
 {
     if (list->head == NULL)
     {
@@ -138,8 +140,30 @@ void loadConfig(const char *filename)
         memcpy(entry->key, key.p, key.len);
         memcpy(entry->val, val.p, val.len);
 
-        addEntry(list, entry);
+        addEntry(entry);
     }
 
     fclose(fd);
+}
+
+const char *getConfValue(const char *key)
+{
+    if (list == NULL || list->head == NULL)
+    {
+        printf("Config list is not initialized or it's empty. \n");
+        exit(0);
+    }
+
+    ConfigEntry* entry = list->head; 
+
+    while (entry != NULL)
+    {
+        if (strcmp(entry->key, key) == 0)
+            return entry->val;
+        
+        entry = entry->next;
+    }
+
+    printf("Config entry for '%s' can't be found. \n", key);
+    exit(0);
 }
