@@ -8,7 +8,11 @@
 int main(int argc, char **argv)
 {
     ServerConfig* config = server_conf_init(CONF_FILE);
-    SharedMemory* shm = shm_init();
+    SharedMemory* shm = shared_memory_init();
+
+    int *a = (int *)shm->alloc(sizeof(int));
+    *a = 4;
+    printf("Address: %p, Value: %d \n", a, *a);
 
     exit(0);
 }

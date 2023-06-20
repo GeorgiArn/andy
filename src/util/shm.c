@@ -1,35 +1,78 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/mman.h>
 
 #include "shm.h"
 
-// TODO
+#define PAGE_SIZE 4096
+#define MEM_ALIGN sizeof(unsigned long)
+
+// Round up x to the nearest multiple of y
+#define ROUND_UP(x, y) (((x + (y - 1)) / y) * y)
+
+typedef struct shm
+{
+    char *addr;
+    size_t size, offset;
+} shm;
+
+static shm *shm_obj = NULL;
+
 static void *alloc(size_t bytes)
 {
+    bytes = ROUND_UP(bytes, MEM_ALIGN);
+    if (bytes > shm_obj->size - bytes)
+    {
+        printf("Not enough space in shared memory to allocate %ld bytes. \n", bytes);
+        exit(0);
+    }
+
+    void *addr = shm_obj->addr + shm_obj->offset;
+    shm_obj->offset += bytes;
+
+    return addr;
 }
 
-// TODO
 static void *alloc_pages(unsigned int pg_count)
 {
+    void *addr = mmap(NULL, pg_count * PAGE_SIZE, PROT_READ | PROT_WRITE,
+                      MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+    if (addr == NULL)
+    {
+        printf("Failed to allocate shared memory. \n");
+        exit(0);
+    }
+
+    return addr;
 }
 
-// TODO
 static void free_pages(void *addr, unsigned int pg_count)
 {
+    munmap(addr, pg_count * PAGE_SIZE);
 }
 
-SharedMemory* shm_init() 
+static void shm_init()
 {
-    SharedMemory* shm = (SharedMemory*) malloc(sizeof(SharedMemory));
-    if (shm == NULL)
+    char *addr = (char *)alloc_pages(1);
+
+    shm_obj = (shm *)addr;
+    shm_obj->addr = addr;
+    shm_obj->size = PAGE_SIZE;
+    shm_obj->offset = ROUND_UP(sizeof(shm_obj), sizeof(MEM_ALIGN));
+}
+
+SharedMemory *shared_memory_init()
+{
+    SharedMemory *shared_memory = (SharedMemory *)malloc(sizeof(SharedMemory));
+    if (shared_memory == NULL)
     {
         printf("Failed to allocate memory for shared memory interface. \n");
         exit(0);
     }
 
-    shm->alloc = alloc;
-    shm->alloc_pages = alloc_pages;
-    shm->free_pages = free_pages;
+    shared_memory->alloc = alloc;
 
-    return shm;
+    shm_init();
+
+    return shared_memory;
 }
