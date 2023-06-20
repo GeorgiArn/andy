@@ -162,6 +162,12 @@ static const char *get_entry(const char *key)
 
 ServerConfig *server_conf_init(const char *filename)
 {
+    if (list != NULL)
+    {
+        printf("Server config is already initalized. \n");
+        exit(0);
+    }
+
     ServerConfig *config = (ServerConfig *)malloc(sizeof(ServerConfig));
     if (config == NULL)
     {
