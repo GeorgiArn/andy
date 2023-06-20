@@ -3,14 +3,12 @@
 #include <unistd.h>
 
 #include "conf.h"
+#include "shm.h"
 
 int main(int argc, char **argv)
 {
     ServerConfig* config = server_conf_init(CONF_FILE);
-    const char *port = config->get_entry("listen");
-
-    printf("%s\n", config->filename);
-    printf("%s\n", port);
+    SharedMemory* shm = shm_init();
 
     exit(0);
 }
