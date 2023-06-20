@@ -4,9 +4,9 @@
 typedef struct ServerConfig
 {
     const char* filename;
-    const char *(*getEntry)(const char *key);
+    const char *(*get_entry)(const char *key);
 } ServerConfig;
 
-ServerConfig *initializeServerConfig(const char *filename);
+ServerConfig *server_conf_init(const char *filename);
 
 #endif
