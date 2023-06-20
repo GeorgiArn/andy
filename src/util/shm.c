@@ -4,7 +4,7 @@
 #include "shm.h"
 
 // TODO
-static void alloc(size_t bytes)
+static void *alloc(size_t bytes)
 {
 }
 
@@ -14,7 +14,7 @@ static void *alloc_pages(unsigned int pg_count)
 }
 
 // TODO
-static void *free_pages(void *addr, unsigned int pg_count)
+static void free_pages(void *addr, unsigned int pg_count)
 {
 }
 
