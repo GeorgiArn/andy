@@ -30,7 +30,7 @@ typedef struct str_t
 
 static EntriesList *list = NULL;
 
-static EntriesList *initializeEntriesList()
+static EntriesList *entries_list_init()
 {
     list = (EntriesList *)malloc(sizeof(EntriesList));
     if (list == NULL)
@@ -45,7 +45,7 @@ static EntriesList *initializeEntriesList()
     return list;
 }
 
-static int addEntry(ConfigEntry *entry)
+static int add_entry(ConfigEntry *entry)
 {
     if (list->head == NULL)
     {
@@ -64,7 +64,7 @@ static int addEntry(ConfigEntry *entry)
     return 0;
 }
 
-static int parseEntry(unsigned char *row, str_t *key, str_t *val)
+static int parse_entry(unsigned char *row, str_t *key, str_t *val)
 {
     unsigned char *c = row;
 
@@ -103,10 +103,10 @@ static int parseEntry(unsigned char *row, str_t *key, str_t *val)
     return 0;
 }
 
-static void loadConfig(const char *filename)
+static void load_config(const char *filename)
 {
     FILE *fd = fopen(filename, "r");
-    EntriesList *list = initializeEntriesList();
+    EntriesList *list = entries_list_init();
     if (fd == NULL)
     {
         printf("Configuration file can't be opened. \n");
@@ -118,7 +118,7 @@ static void loadConfig(const char *filename)
     {
         str_t key, val;
 
-        if (parseEntry(row, &key, &val) == -1)
+        if (parse_entry(row, &key, &val) == -1)
             continue;
 
         ConfigEntry *entry = (ConfigEntry *)malloc(sizeof(ConfigEntry));
@@ -140,13 +140,13 @@ static void loadConfig(const char *filename)
         memcpy(entry->key, key.p, key.len);
         memcpy(entry->val, val.p, val.len);
 
-        addEntry(entry);
+        add_entry(entry);
     }
 
     fclose(fd);
 }
 
-static const char *getEntry(const char *key)
+static const char *get_entry(const char *key)
 {
     if (list == NULL || list->head == NULL)
     {
@@ -168,7 +168,7 @@ static const char *getEntry(const char *key)
     exit(0);
 }
 
-ServerConfig *initializeServerConfig(const char *filename)
+ServerConfig *server_conf_init(const char *filename)
 {
     ServerConfig *config = (ServerConfig *)malloc(sizeof(ServerConfig));
     if (config == NULL)
@@ -177,9 +177,9 @@ ServerConfig *initializeServerConfig(const char *filename)
         exit(0);
     }
 
-    loadConfig(filename);
+    load_config(filename);
     config->filename = filename;
-    config->getEntry = getEntry;
+    config->get_entry = get_entry;
 
     return config;
 }
