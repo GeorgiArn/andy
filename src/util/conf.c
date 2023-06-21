@@ -5,22 +5,10 @@
 #include <string.h>
 
 #include "conf.h"
+#include "hashtable.h"
 
-#define KEY_VALUE_LEN 128
+#define KEY_VALUE_LEN 32
 #define BUFFER_LEN (KEY_VALUE_LEN * 2) + 3
-
-typedef struct ConfigEntry
-{
-    char key[KEY_VALUE_LEN];
-    char val[KEY_VALUE_LEN];
-    struct ConfigEntry *next;
-} ConfigEntry;
-
-typedef struct EntriesList
-{
-    ConfigEntry *head;
-    size_t length;
-} EntriesList;
 
 typedef struct str_t
 {
@@ -28,33 +16,7 @@ typedef struct str_t
     size_t len;
 } str_t;
 
-static EntriesList *list = NULL;
-
-static EntriesList *entries_list_init()
-{
-    list = (EntriesList *)malloc(sizeof(EntriesList));
-    if (list == NULL)
-    {
-        printf("Failed to allocated memory for config entries. \n");
-        exit(0);
-    }
-
-    list->head = NULL;
-    list->length = 0;
-
-    return list;
-}
-
-static int add_entry(ConfigEntry *entry)
-{
-    ConfigEntry *next = list->head;
-    list->head = entry;
-    entry->next = next;
-
-    list->length++;
-
-    return 0;
-}
+static HashTable *config_map = NULL;
 
 static int parse_entry(unsigned char *row, str_t *key, str_t *val)
 {
@@ -98,7 +60,8 @@ static int parse_entry(unsigned char *row, str_t *key, str_t *val)
 static void load_config(const char *filename)
 {
     FILE *fd = fopen(filename, "r");
-    EntriesList *list = entries_list_init();
+    config_map = create_hash_table();
+
     if (fd == NULL)
     {
         printf("Configuration file can't be opened. \n");
@@ -113,13 +76,6 @@ static void load_config(const char *filename)
         if (parse_entry(row, &key, &val) == -1)
             continue;
 
-        ConfigEntry *entry = (ConfigEntry *)malloc(sizeof(ConfigEntry));
-        if (entry == NULL)
-        {
-            printf("Failed to allocate config entry. \n");
-            exit(0);
-        }
-
         if (key.len > KEY_VALUE_LEN || val.len > KEY_VALUE_LEN)
         {
             printf("Config entry is too long. Maximum allowed key and value width: %d\n%.*s = %.*s \n",
@@ -129,10 +85,19 @@ static void load_config(const char *filename)
             exit(0);
         }
 
-        memcpy(entry->key, key.p, key.len);
-        memcpy(entry->val, val.p, val.len);
+        char map_key[KEY_VALUE_LEN];
+        char *map_value = (char *)malloc(KEY_VALUE_LEN * sizeof(char));
 
-        add_entry(entry);
+        if (map_value == NULL)
+        {
+            printf("Failed to allocate config map entry value. \n");
+            exit(0);
+        }
+
+        memcpy(map_key, key.p, key.len);
+        memcpy(map_value, val.p, val.len);
+
+        config_map->set(config_map, map_key, (void*) map_value);
     }
 
     fclose(fd);
@@ -140,29 +105,25 @@ static void load_config(const char *filename)
 
 static const char *get_entry(const char *key)
 {
-    if (list == NULL || list->head == NULL)
+    if (config_map == NULL)
     {
-        printf("Config list is not initialized or it's empty. \n");
+        printf("Config map is not initialized. \n");
         exit(0);
     }
 
-    ConfigEntry *entry = list->head;
-
-    while (entry != NULL)
+    const char *val = config_map->get(config_map, key);
+    if (val == NULL)
     {
-        if (strcmp(entry->key, key) == 0)
-            return entry->val;
-
-        entry = entry->next;
+        printf("Config entry for '%s' can't be found. \n", key);
+        exit(0);
     }
 
-    printf("Config entry for '%s' can't be found. \n", key);
-    exit(0);
+    return val;
 }
 
 ServerConfig *server_conf_init(const char *filename)
 {
-    if (list != NULL)
+    if (config_map != NULL)
     {
         printf("Server config is already initalized. \n");
         exit(0);
