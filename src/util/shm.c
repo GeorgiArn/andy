@@ -3,6 +3,7 @@
 #include <sys/mman.h>
 
 #include "shm.h"
+#include "spinlock.h"
 
 #define PAGE_SIZE 4096
 #define MEM_ALIGN sizeof(unsigned long)
@@ -14,6 +15,7 @@ typedef struct shm
 {
     char *addr;
     size_t size, offset;
+    Spinlock spinlock;
 } shm;
 
 static shm *shm_obj = NULL;
@@ -21,6 +23,8 @@ static shm *shm_obj = NULL;
 static void *alloc(size_t bytes)
 {
     bytes = ROUND_UP(bytes, MEM_ALIGN);
+
+    shm_obj->spinlock.lock(&shm_obj->spinlock);
     if (bytes > shm_obj->size - bytes)
     {
         printf("Not enough space in shared memory to allocate %ld bytes. \n", bytes);
@@ -29,6 +33,7 @@ static void *alloc(size_t bytes)
 
     void *addr = shm_obj->addr + shm_obj->offset;
     shm_obj->offset += bytes;
+    shm_obj->spinlock.unlock(&shm_obj->spinlock);
 
     return addr;
 }
@@ -59,6 +64,7 @@ static void shm_init()
     shm_obj->addr = addr;
     shm_obj->size = PAGE_SIZE;
     shm_obj->offset = ROUND_UP(sizeof(shm_obj), sizeof(MEM_ALIGN));
+    shm_obj->spinlock = *spinlock_init();
 }
 
 SharedMemory *shared_memory_init()
