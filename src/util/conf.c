@@ -111,14 +111,7 @@ static const char *get_entry(const char *key)
         exit(0);
     }
 
-    const char *val = config_map->get(config_map, key);
-    if (val == NULL)
-    {
-        printf("Config entry for '%s' can't be found. \n", key);
-        exit(0);
-    }
-
-    return val;
+    return config_map->get(config_map, key);
 }
 
 ServerConfig *server_conf_init(const char *filename)
