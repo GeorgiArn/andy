@@ -5,6 +5,7 @@
 
 typedef struct TCPServer {
     int fd;
+    char* host;
     void (*start)(struct TCPServer *server, ServerConfig *config);
     void (*stop)(struct TCPServer *server);
 } TCPServer;

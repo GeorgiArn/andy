@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "server.h"
 
@@ -32,9 +33,32 @@ static void set_nonblock(int socket_fd)
     int flags = fcntl(socket_fd, F_GETFL, 0);
     if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) != 0)
     {
-        printf("Failed to set server to non-blocking mode");
+        printf("Failed to set server to non-blocking mode. \n");
         exit(0);
     }
+}
+
+static in_addr_t get_address(ServerConfig *config)
+{
+    const char *ip = config->get_entry("host");
+    if (ip == NULL)
+    {
+        printf("Host address must be provided in %s. \n", config->filename);
+        exit(0);
+    }
+
+    if (strcmp(ip, "localhost") == 0)
+        return INADDR_ANY;
+
+
+    struct in_addr addr;
+    if (inet_pton(AF_INET, ip, &addr) != 1)
+    {
+        printf("Invalid host address in %s. \n", config->filename);
+        exit(0);
+    }
+
+    return addr.s_addr; 
 }
 
 static void start(TCPServer *server, ServerConfig *config)
@@ -51,8 +75,7 @@ static void start(TCPServer *server, ServerConfig *config)
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_port = htons(get_port(config));
-    // TODO: Set server address to the one specified in andy.conf
-    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_addr.s_addr = get_address(config);
 
     if (bind(socket_fd, (struct sockaddr *)&address, sizeof(address)) == -1)
     {
@@ -66,6 +89,7 @@ static void start(TCPServer *server, ServerConfig *config)
         exit(0);
     }
 
+    server->host = config->get_entry("host");
     server->fd = socket_fd;
 }
 
@@ -90,6 +114,7 @@ TCPServer *tcp_server_init()
     }
 
     server->fd = 0;
+    server->host = NULL;
     server->start = start;
     server->stop = stop;
 

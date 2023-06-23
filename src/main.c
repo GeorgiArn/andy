@@ -13,7 +13,8 @@ int main(int argc, char **argv)
     TCPServer *server = tcp_server_init(); 
 
     server->start(server, config);
-    printf("%d\n", server->fd);
+    printf("Socket fd: %d\n", server->fd);
+    printf("Host: %s\n", server->host);
     server->stop(server);
 
     exit(0);
