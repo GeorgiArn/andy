@@ -106,7 +106,7 @@ static void load_config(const char *filename)
     fclose(fd);
 }
 
-static const char *get_entry(const char *key)
+static char *get_entry(const char *key)
 {
     if (config_map == NULL)
     {
