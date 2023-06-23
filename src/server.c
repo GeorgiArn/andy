@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 
 #include "server.h"
 
@@ -26,6 +27,16 @@ static int get_port(ServerConfig *config)
     return port;
 }
 
+static void set_nonblock(int socket_fd)
+{
+    int flags = fcntl(socket_fd, F_GETFL, 0);
+    if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) != 0)
+    {
+        printf("Failed to set server to non-blocking mode");
+        exit(0);
+    }
+}
+
 static void start(TCPServer *server, ServerConfig *config)
 {
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -35,7 +46,7 @@ static void start(TCPServer *server, ServerConfig *config)
         exit(0);
     }
 
-    // TODO: Set socket to non-blocking
+    set_nonblock(socket_fd);
 
     struct sockaddr_in address;
     address.sin_family = AF_INET;
