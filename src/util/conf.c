@@ -97,13 +97,16 @@ static void load_config(const char *filename)
         memcpy(map_key, key.p, key.len);
         memcpy(map_value, val.p, val.len);
 
+        map_key[key.len] = '\0';
+        map_value[val.len] = '\0';
+
         config_map->set(config_map, map_key, (void*) map_value);
     }
 
     fclose(fd);
 }
 
-static const char *get_entry(const char *key)
+static char *get_entry(const char *key)
 {
     if (config_map == NULL)
     {
