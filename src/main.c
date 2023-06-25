@@ -5,17 +5,14 @@
 #include "conf.h"
 #include "shm.h"
 #include "server.h"
+#include "master.h"
 
 int main(int argc, char **argv)
 {
     ServerConfig *config = server_conf_init(CONF_FILE);
-    SharedMemory *shm = shared_memory_init();
-    TCPServer *server = tcp_server_init(); 
+    MasterProcess *master = master_process_init(config);
 
-    server->start(server, config);
-    printf("Socket fd: %d\n", server->fd);
-    printf("Host: %s\n", server->host);
-    server->stop(server);
+    master->run_ev_loop(master);
 
     exit(0);
 }
