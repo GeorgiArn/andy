@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "conf.h"
+#include "system.h"
 
 typedef struct MasterProcess
 {
@@ -12,6 +13,6 @@ typedef struct MasterProcess
     void (*run_ev_loop)(struct MasterProcess *master);
 } MasterProcess;
 
-MasterProcess *master_process_init(ServerConfig *config);
+MasterProcess *master_process_init(System *system, ServerConfig *config);
 
 #endif

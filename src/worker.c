@@ -6,12 +6,12 @@
 
 static void run_ev_loop(WorkerProcess *worker) {
     // TODO: accept and handle server connections
-    printf("worker %d started...\n", worker->pid);
+    printf("worker (pid: %d, cpuid: %d) started: \n", worker->pid, worker->cpuid);
     fflush(stdout);
 
-    sleep(2);
+    sleep(10);
 
-    printf("worker %d finished...\n", worker->pid);
+    printf("worker (pid: %d, cpuid: %d) finished: \n", worker->pid, worker->cpuid);
     fflush(stdout);
 }
 
@@ -25,6 +25,7 @@ WorkerProcess *worker_process_init(MasterProcess *master)
     }
 
     worker->pid = -1;
+    worker->cpuid = -1;
     worker->run_ev_loop = run_ev_loop;
 
     return worker;

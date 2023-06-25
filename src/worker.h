@@ -6,6 +6,7 @@
 typedef struct WorkerProcess
 {
     pid_t pid;
+    int cpuid;
     void (*run_ev_loop)(struct WorkerProcess *worker);
 } WorkerProcess;
 
