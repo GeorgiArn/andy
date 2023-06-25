@@ -6,8 +6,10 @@
 
 #include "master.h"
 #include "worker.h"
+#include "server.h"
 
 static System* g_system = NULL;
+static TCPServer* g_server = NULL;
 
 static bool g_shall_spawn_worker = true;
 
@@ -62,7 +64,7 @@ static void spawn_workers(MasterProcess *master, WorkerProcess *workers[])
                     exit(0);
                 }
 
-                workers[i]->run_ev_loop(workers[i]);
+                workers[i]->run_ev_loop(workers[i], g_server);
                 exit(0);
                 break;
             default:
@@ -101,6 +103,8 @@ MasterProcess *master_process_init(System *system, ServerConfig *config)
     }
 
     g_system = system;
+    g_server = tcp_server_init();
+    g_server->start(g_server, config);
 
     master->pid = getpid();
     master->workers_count = get_workers_count(config);

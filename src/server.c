@@ -72,9 +72,11 @@ static void start(TCPServer *server, ServerConfig *config)
 
     set_nonblock(socket_fd);
 
+    int port = get_port(config);
+
     struct sockaddr_in address;
     address.sin_family = AF_INET;
-    address.sin_port = htons(get_port(config));
+    address.sin_port = htons(port);
     address.sin_addr.s_addr = get_address(config);
 
     if (bind(socket_fd, (struct sockaddr *)&address, sizeof(address)) == -1)
@@ -90,6 +92,7 @@ static void start(TCPServer *server, ServerConfig *config)
     }
 
     server->host = config->get_entry("host");
+    server->port = port;
     server->fd = socket_fd;
 }
 
@@ -115,6 +118,7 @@ TCPServer *tcp_server_init()
 
     server->fd = 0;
     server->host = NULL;
+    server->port = 0;
     server->start = start;
     server->stop = stop;
 

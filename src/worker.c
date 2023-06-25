@@ -4,14 +4,15 @@
 
 #include "worker.h"
 
-static void run_ev_loop(WorkerProcess *worker) {
+static void run_ev_loop(WorkerProcess *worker, TCPServer *server) {
     // TODO: accept and handle server connections
-    printf("worker (pid: %d, cpuid: %d) started: \n", worker->pid, worker->cpuid);
+    printf("Worker handling connections on %s:%d \n", server->host, server->port);
+    printf("worker (pid: %d, cpuid: %d) started. \n", worker->pid, worker->cpuid);
     fflush(stdout);
 
     sleep(10);
 
-    printf("worker (pid: %d, cpuid: %d) finished: \n", worker->pid, worker->cpuid);
+    printf("worker (pid: %d, cpuid: %d) finished. \n", worker->pid, worker->cpuid);
     fflush(stdout);
 }
 
