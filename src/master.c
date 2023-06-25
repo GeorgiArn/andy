@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "master.h"
 #include "worker.h"
@@ -10,13 +11,30 @@ static bool shall_spawn_worker = true;
 
 static size_t get_workers_count(ServerConfig *config)
 {
-    // TODO: get workers count from config
-    return 4;
+    const char* workers_count_str = config->get_entry("workers_count");
+    
+    if (workers_count_str == NULL)
+    {
+        printf("Workers count must be provided in %s. \n", config->filename);
+        exit(0);
+    }
+
+    if (strcmp(workers_count_str, "default") == 0)
+        return sysconf(_SC_NPROCESSORS_CONF);
+    
+    int workers_count = atoi(workers_count_str);
+    if (workers_count <= 0)
+    {
+        printf("Invalid workers count in %s. \n", config->filename);
+        exit(0);
+    }
+
+    return workers_count;
 }
 
 static void spawn_workers(MasterProcess *master, WorkerProcess *workers[])
 {
-    for (size_t i = 0; i < master->workers_num; i++)
+    for (size_t i = 0; i < master->workers_count; i++)
     {
         if (workers[i] == NULL)
             workers[i] = worker_process_init(master);
@@ -47,8 +65,8 @@ static void spawn_workers(MasterProcess *master, WorkerProcess *workers[])
 
 static void run_ev_loop(MasterProcess *master)
 {
-    WorkerProcess* workers[master->workers_num];
-    for (size_t i = 0; i < master->workers_num; i++)
+    WorkerProcess* workers[master->workers_count];
+    for (size_t i = 0; i < master->workers_count; i++)
         workers[i] = NULL;
 
     while (true)
@@ -72,7 +90,7 @@ MasterProcess *master_process_init(ServerConfig *config)
     }
 
     master->pid = getpid();
-    master->workers_num = get_workers_count(config);
+    master->workers_count = get_workers_count(config);
 
     master->run_ev_loop = run_ev_loop;
 

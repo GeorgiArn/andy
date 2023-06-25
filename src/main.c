@@ -12,6 +12,8 @@ int main(int argc, char **argv)
     ServerConfig *config = server_conf_init(CONF_FILE);
     MasterProcess *master = master_process_init(config);
 
+    printf("%d\n", master->workers_count);
+
     master->run_ev_loop(master);
 
     exit(0);
