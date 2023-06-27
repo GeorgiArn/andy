@@ -13,6 +13,6 @@ typedef struct Spinlock
     void (*unlock)(struct Spinlock *spinlock);
 } Spinlock;
 
-Spinlock *spinlock_init();
+Spinlock *spinlock_init(Spinlock *spinlock);
 
 #endif

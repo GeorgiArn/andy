@@ -8,19 +8,18 @@
 static void lock(Spinlock *spinlock)
 {
     int ticket = atomic_fetch_add(&spinlock->ticket, 1);
-    while (spinlock->turn != ticket)
+    while (atomic_load(&spinlock->turn) != ticket)
     {}
 }
 
 static int try_lock(Spinlock *spinlock)
 {
-    int ticket = atomic_fetch_add(&spinlock->ticket, 1);
-
-    if (spinlock->turn == ticket)
-        return 1;
+    int ticket = atomic_load(&spinlock->ticket);
+    if (atomic_load(&spinlock->turn) != ticket)
+        return 0;
     
-    atomic_fetch_sub(&spinlock->ticket, 1);
-    return 0;
+    atomic_fetch_add(&spinlock->ticket, 1);
+    return 1;
 }
 
 static void unlock(Spinlock *spinlock)
