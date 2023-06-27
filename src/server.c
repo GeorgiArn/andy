@@ -8,6 +8,16 @@
 
 #include "server.h"
 
+void make_non_blocking(int socket_fd)
+{
+    int flags = fcntl(socket_fd, F_GETFL, 0);
+    if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) != 0)
+    {
+        printf("Failed to set server to non-blocking mode. \n");
+        exit(0);
+    }
+}
+
 static int get_port(ServerConfig *config)
 {
     const char *port_str = config->get_entry("port");
@@ -26,16 +36,6 @@ static int get_port(ServerConfig *config)
     }
 
     return port;
-}
-
-static void set_nonblock(int socket_fd)
-{
-    int flags = fcntl(socket_fd, F_GETFL, 0);
-    if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) != 0)
-    {
-        printf("Failed to set server to non-blocking mode. \n");
-        exit(0);
-    }
 }
 
 static in_addr_t get_address(ServerConfig *config)
@@ -70,7 +70,7 @@ static void start(TCPServer *server, ServerConfig *config)
         exit(0);
     }
 
-    set_nonblock(socket_fd);
+    make_non_blocking(socket_fd);
 
     int port = get_port(config);
 

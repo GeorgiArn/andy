@@ -15,5 +15,6 @@ typedef struct TCPServer {
 } TCPServer;
 
 TCPServer *tcp_server_init(SharedMemory *shm);
+void make_non_blocking(int socket_fd);
 
 #endif
