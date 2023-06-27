@@ -107,7 +107,7 @@ static void stop(TCPServer *server)
     close(server->fd);
 }
 
-TCPServer *tcp_server_init()
+TCPServer *tcp_server_init(SharedMemory *shm)
 {
     TCPServer *server = (TCPServer *)malloc(sizeof(TCPServer));
     if (server == NULL)
@@ -119,6 +119,10 @@ TCPServer *tcp_server_init()
     server->fd = 0;
     server->host = NULL;
     server->port = 0;
+
+    server->g_accept_lock = (Spinlock*) shm->alloc(sizeof(Spinlock));
+    spinlock_init(server->g_accept_lock);
+
     server->start = start;
     server->stop = stop;
 

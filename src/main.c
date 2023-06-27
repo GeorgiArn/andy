@@ -13,7 +13,7 @@ int main(int argc, char **argv)
     ServerConfig *config = server_conf_init(CONF_FILE);
     SharedMemory *shm = shared_memory_init(system);
 
-    MasterProcess *master = master_process_init(system, config);
+    MasterProcess *master = master_process_init(system, shm, config);
 
     printf("Master process id: %d\n", master->pid);
 

@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <sys/epoll.h>
 
 #include "worker.h"
 
 static void run_ev_loop(WorkerProcess *worker, TCPServer *server) {
-    // TODO: accept and handle server connections
+    struct epoll_event accept_event;
+    accept_event.data.fd = server->fd;
+
     printf("Worker handling connections on %s:%d \n", server->host, server->port);
     printf("worker (pid: %d, cpuid: %d) started. \n", worker->pid, worker->cpuid);
     fflush(stdout);

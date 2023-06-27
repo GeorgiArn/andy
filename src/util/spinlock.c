@@ -28,13 +28,16 @@ static void unlock(Spinlock *spinlock)
     atomic_fetch_add(&spinlock->turn, 1);
 }
 
-Spinlock *spinlock_init()
+Spinlock *spinlock_init(Spinlock *spinlock)
 {
-    Spinlock *spinlock = (Spinlock *)malloc(sizeof(Spinlock));
     if (spinlock == NULL)
     {
-        printf("Failed to allocate memory for spinlock. \n");
-        exit(0);
+        spinlock = (Spinlock *)malloc(sizeof(Spinlock));
+        if (spinlock == NULL)
+        {
+            printf("Failed to allocate memory for spinlock. \n");
+            exit(0);
+        }
     }
 
     spinlock->lock = lock;

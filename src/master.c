@@ -93,7 +93,7 @@ static void run_ev_loop(MasterProcess *master)
     }
 }
 
-MasterProcess *master_process_init(System *system, ServerConfig *config)
+MasterProcess *master_process_init(System *system, SharedMemory *shm, ServerConfig *config)
 {
     MasterProcess *master = (MasterProcess *)malloc(sizeof(MasterProcess));
     if (master == NULL)
@@ -103,7 +103,7 @@ MasterProcess *master_process_init(System *system, ServerConfig *config)
     }
 
     g_system = system;
-    g_server = tcp_server_init();
+    g_server = tcp_server_init(shm);
     g_server->start(g_server, config);
 
     master->pid = getpid();
