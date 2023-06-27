@@ -9,6 +9,7 @@ typedef struct Spinlock
     atomic_int turn;
 
     void (*lock)(struct Spinlock *spinlock);
+    int (*try_lock)(struct Spinlock *spinlock);
     void (*unlock)(struct Spinlock *spinlock);
 } Spinlock;
 

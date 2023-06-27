@@ -5,14 +5,25 @@
 
 #include "spinlock.h"
 
-void lock(Spinlock *spinlock)
+static void lock(Spinlock *spinlock)
 {
     int ticket = atomic_fetch_add(&spinlock->ticket, 1);
     while (spinlock->turn != ticket)
     {}
 }
 
-void unlock(Spinlock *spinlock)
+static int try_lock(Spinlock *spinlock)
+{
+    int ticket = atomic_fetch_add(&spinlock->ticket, 1);
+
+    if (spinlock->turn == ticket)
+        return 1;
+    
+    atomic_fetch_sub(&spinlock->ticket, 1);
+    return 0;
+}
+
+static void unlock(Spinlock *spinlock)
 {
     atomic_fetch_add(&spinlock->turn, 1);
 }
@@ -27,6 +38,7 @@ Spinlock *spinlock_init()
     }
 
     spinlock->lock = lock;
+    spinlock->try_lock = try_lock;
     spinlock->unlock = unlock;
 
     atomic_init(&spinlock->ticket, 0);
