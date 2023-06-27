@@ -65,7 +65,7 @@ static void shm_init()
     shm_obj->addr = addr;
     shm_obj->size = g_system->page_size;
     shm_obj->offset = ROUND_UP(sizeof(shm_obj), sizeof(MEM_ALIGN));
-    shm_obj->spinlock = *spinlock_init();
+    shm_obj->spinlock = *spinlock_init(NULL);
 }
 
 SharedMemory *shared_memory_init(System *system)
