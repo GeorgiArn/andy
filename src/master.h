@@ -5,6 +5,7 @@
 
 #include "conf.h"
 #include "system.h"
+#include "shm.h"
 
 typedef struct MasterProcess
 {
@@ -13,6 +14,6 @@ typedef struct MasterProcess
     void (*run_ev_loop)(struct MasterProcess *master);
 } MasterProcess;
 
-MasterProcess *master_process_init(System *system, ServerConfig *config);
+MasterProcess *master_process_init(System *system, SharedMemory *shm, ServerConfig *config);
 
 #endif

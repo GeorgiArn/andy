@@ -6,8 +6,11 @@
 
 #include "master.h"
 #include "worker.h"
+#include "server.h"
 
 static System* g_system = NULL;
+static TCPServer* g_server = NULL;
+static ServerConfig* g_config = NULL;
 
 static bool g_shall_spawn_worker = true;
 
@@ -40,7 +43,7 @@ static void spawn_workers(MasterProcess *master, WorkerProcess *workers[])
     {
         if (workers[i] == NULL)
         {
-            workers[i] = worker_process_init(master);
+            workers[i] = worker_process_init(master, g_config);
             workers[i]->cpuid = i % g_system->cpu_num;
         }
 
@@ -62,7 +65,7 @@ static void spawn_workers(MasterProcess *master, WorkerProcess *workers[])
                     exit(0);
                 }
 
-                workers[i]->run_ev_loop(workers[i]);
+                workers[i]->run_ev_loop(workers[i], g_server);
                 exit(0);
                 break;
             default:
@@ -91,7 +94,7 @@ static void run_ev_loop(MasterProcess *master)
     }
 }
 
-MasterProcess *master_process_init(System *system, ServerConfig *config)
+MasterProcess *master_process_init(System *system, SharedMemory *shm, ServerConfig *config)
 {
     MasterProcess *master = (MasterProcess *)malloc(sizeof(MasterProcess));
     if (master == NULL)
@@ -101,6 +104,9 @@ MasterProcess *master_process_init(System *system, ServerConfig *config)
     }
 
     g_system = system;
+    g_config = config;
+    g_server = tcp_server_init(shm);
+    g_server->start(g_server, config);
 
     master->pid = getpid();
     master->workers_count = get_workers_count(config);

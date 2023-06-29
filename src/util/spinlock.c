@@ -5,28 +5,42 @@
 
 #include "spinlock.h"
 
-void lock(Spinlock *spinlock)
+static void lock(Spinlock *spinlock)
 {
     int ticket = atomic_fetch_add(&spinlock->ticket, 1);
-    while (spinlock->turn != ticket)
+    while (atomic_load(&spinlock->turn) != ticket)
     {}
 }
 
-void unlock(Spinlock *spinlock)
+static int try_lock(Spinlock *spinlock)
+{
+    int ticket = atomic_load(&spinlock->ticket);
+    if (atomic_load(&spinlock->turn) != ticket)
+        return 0;
+    
+    atomic_fetch_add(&spinlock->ticket, 1);
+    return 1;
+}
+
+static void unlock(Spinlock *spinlock)
 {
     atomic_fetch_add(&spinlock->turn, 1);
 }
 
-Spinlock *spinlock_init()
+Spinlock *spinlock_init(Spinlock *spinlock)
 {
-    Spinlock *spinlock = (Spinlock *)malloc(sizeof(Spinlock));
     if (spinlock == NULL)
     {
-        printf("Failed to allocate memory for spinlock. \n");
-        exit(0);
+        spinlock = (Spinlock *)malloc(sizeof(Spinlock));
+        if (spinlock == NULL)
+        {
+            printf("Failed to allocate memory for spinlock. \n");
+            exit(0);
+        }
     }
 
     spinlock->lock = lock;
+    spinlock->try_lock = try_lock;
     spinlock->unlock = unlock;
 
     atomic_init(&spinlock->ticket, 0);

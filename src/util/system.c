@@ -30,6 +30,7 @@ System *system_init()
     }
 
     sys->cpu_num = get_nprocs_conf();
+    sys->page_size = sysconf(_SC_NPROCESSORS_CONF);
     sys->bind_cpu = bind_cpu;
 
     return sys;
