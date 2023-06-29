@@ -6,6 +6,7 @@
 typedef struct EventsSystem
 {
     int epoll_fd;
+    size_t max_fds;
     struct epoll_event *incoming_events;
     void (*add)(struct EventsSystem *es, int fd, uint32_t events);
     void (*mod)(struct EventsSystem *es, int fd, uint32_t events);
@@ -13,6 +14,6 @@ typedef struct EventsSystem
     size_t (*wait)(struct EventsSystem *es);
 } EventsSystem;
 
-EventsSystem *events_system_init();
+EventsSystem *events_system_init(size_t max_fds);
 
 #endif

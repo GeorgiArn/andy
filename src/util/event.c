@@ -4,8 +4,6 @@
 
 #include "event.h"
 
-#define MAXFDS 1024
-
 static void add(EventsSystem *es, int fd, uint32_t events)
 {
     struct epoll_event event;
@@ -43,11 +41,11 @@ static void del(EventsSystem *es, int fd)
 
 static size_t wait(EventsSystem *es)
 {
-    size_t nready = epoll_wait(es->epoll_fd, es->incoming_events, MAXFDS, -1);
+    size_t nready = epoll_wait(es->epoll_fd, es->incoming_events, es->max_fds, -1);
     return nready;
 }
 
-EventsSystem *events_system_init()
+EventsSystem *events_system_init(size_t max_fds)
 {
     EventsSystem *es = (EventsSystem*) malloc(sizeof(EventsSystem));
     if (es == NULL)
@@ -59,7 +57,8 @@ EventsSystem *events_system_init()
     int fd = epoll_create1(0);
 
     es->epoll_fd = fd;
-    es->incoming_events = calloc(MAXFDS, sizeof(struct epoll_event));
+    es->max_fds = max_fds;
+    es->incoming_events = calloc(max_fds, sizeof(struct epoll_event));
 
     es->add = add;
     es->mod = mod;

@@ -10,12 +10,11 @@
 
 #define MAXFDS 1024
 
-// TODO: Abstract tasks, work on error handling
 static void run_ev_loop(WorkerProcess *worker, TCPServer *server)
 {
     printf("Worker %d created. \n", worker->pid);
 
-    EventsSystem *es = events_system_init();
+    EventsSystem *es = events_system_init(MAXFDS);
     es->add(es, server->fd, EPOLLIN);
 
     while (1)
