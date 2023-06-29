@@ -27,6 +27,61 @@ static size_t get_max_fds(ServerConfig *conf)
     return worker_connections;
 }
 
+static void accept_client(EventsSystem *es, TCPServer *server)
+{
+    #define TIMEOUT 200000 // 0.2 seconds
+
+    if (server->g_accept_lock->try_lock(server->g_accept_lock))
+    {
+        struct sockaddr_in client_addr;
+        socklen_t client_addr_len = sizeof(client_addr);
+
+        int client_fd = accept(server->fd, (struct sockaddr *)&client_addr, &client_addr_len);
+
+        if (client_fd < 0 && (errno == EINTR || errno == EAGAIN || EWOULDBLOCK))
+            printf("Accept returned EAGAIN or EWOULDBLOCK or EINTR. \n");
+        else if (client_fd >= 0)
+        {
+            make_non_blocking(client_fd);
+            es->add(es, client_fd, EPOLLIN);
+        }
+        server->g_accept_lock->unlock(server->g_accept_lock);
+    }
+    else
+        usleep(TIMEOUT);
+}
+
+static void receive_from_client(EventsSystem *es, int client_fd)
+{
+    char buffer[1024];
+    int nbytes = recv(client_fd, buffer, sizeof(buffer), 0);
+
+    if (nbytes == 0)
+    {
+        // client disconnected
+        es->del(es, client_fd);
+        close(client_fd);
+    }
+    else if (nbytes < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+        es->mod(es, client_fd, EPOLLIN);
+    else if (nbytes > 0)
+        es->mod(es, client_fd, EPOLLOUT);
+}
+
+static void send_to_client(EventsSystem *es, int client_fd)
+{
+    char buffer[1024] = "HTTP/1.1 200 OK\r\n\r\nyooo";
+    int nbytes = send(client_fd, buffer, sizeof(buffer), 0);
+
+    if (nbytes < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+        es->mod(es, client_fd, EPOLLOUT);
+    else if (nbytes >= 0)
+    {
+        es->del(es, client_fd);
+        close(client_fd);
+    }
+}
+
 static void run_ev_loop(WorkerProcess *worker, TCPServer *server)
 {
     printf("Worker %d created. \n", worker->pid);
@@ -34,69 +89,21 @@ static void run_ev_loop(WorkerProcess *worker, TCPServer *server)
     EventsSystem *es = events_system_init(worker->max_fds);
     es->add(es, server->fd, EPOLLIN);
 
-    while (1)
+    while (true)
     {
         size_t nready = es->wait(es);
 
         for (size_t i = 0; i < nready; i++)
         {
-            if (es->incoming_events[i].data.fd == server->fd)
-            {
-                if (server->g_accept_lock->try_lock(server->g_accept_lock))
-                {
-                    struct sockaddr_in client_addr;
-                    socklen_t client_addr_len = sizeof(client_addr);
+            int fd = es->incoming_events[i].data.fd;
+            uint32_t events = es->incoming_events[i].events;
 
-                    int client_fd = accept(server->fd, (struct sockaddr *)&client_addr, &client_addr_len);
-
-                    if (client_fd < 0 && (errno == EINTR || errno == EAGAIN || EWOULDBLOCK))
-                        printf("Accept returned EAGAIN or EWOULDBLOCK or EINTR. \n");
-                    else if (client_fd >= 0)
-                    {
-                        make_non_blocking(client_fd);
-                        es->add(es, client_fd, EPOLLIN);
-                    }
-                    server->g_accept_lock->unlock(server->g_accept_lock);
-                }
-                else
-                    usleep(200000);
-            }
-            else
-            {
-                int client_fd = es->incoming_events[i].data.fd;
-
-                if (es->incoming_events[i].events & EPOLLIN)
-                {
-                    char buffer[1024];
-                    int nbytes = recv(client_fd, buffer, sizeof(buffer), 0);
-
-                    if (nbytes == 0)
-                    {
-                        // client disconnected
-                        es->del(es, client_fd);
-                        close(client_fd);
-                        continue;
-                    }
-
-                    if (nbytes < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-                        es->mod(es, client_fd, EPOLLIN);
-                    else if (nbytes > 0)
-                        es->mod(es, client_fd, EPOLLOUT);
-                }
-                else if (es->incoming_events[i].events & EPOLLOUT)
-                {
-                    char buffer[1024] = "HTTP/1.1 200 OK\r\n\r\nyooo";
-                    int nbytes = send(client_fd, buffer, sizeof(buffer), 0);
-
-                    if (nbytes < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-                        es->mod(es, client_fd, EPOLLOUT);
-                    else if (nbytes >= 0)
-                    {
-                        es->del(es, client_fd);
-                        close(client_fd);
-                    }
-                }
-            }
+            if (fd == server->fd)
+                accept_client(es, server);
+            else if (events & EPOLLIN)
+                receive_from_client(es, fd);
+            else if (events & EPOLLOUT)
+                send_to_client(es, fd);
         }
     }
 }
