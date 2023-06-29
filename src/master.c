@@ -10,6 +10,7 @@
 
 static System* g_system = NULL;
 static TCPServer* g_server = NULL;
+static ServerConfig* g_config = NULL;
 
 static bool g_shall_spawn_worker = true;
 
@@ -42,7 +43,7 @@ static void spawn_workers(MasterProcess *master, WorkerProcess *workers[])
     {
         if (workers[i] == NULL)
         {
-            workers[i] = worker_process_init(master);
+            workers[i] = worker_process_init(master, g_config);
             workers[i]->cpuid = i % g_system->cpu_num;
         }
 
@@ -103,6 +104,7 @@ MasterProcess *master_process_init(System *system, SharedMemory *shm, ServerConf
     }
 
     g_system = system;
+    g_config = config;
     g_server = tcp_server_init(shm);
     g_server->start(g_server, config);
 

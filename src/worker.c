@@ -8,13 +8,30 @@
 #include "worker.h"
 #include "event.h"
 
-#define MAXFDS 1024
+static size_t get_max_fds(ServerConfig *conf)
+{
+    const char *worker_connections_str = conf->get_entry("worker_connections");
+    if (worker_connections_str == NULL)
+    {
+        printf("Number of worker connections must be specified in %s.\n", conf->filename);
+        exit(0);
+    }
+
+    size_t worker_connections = strtoul(worker_connections_str, NULL, 10);
+    if (worker_connections <= 0)
+    {
+        printf("Invalid number of worker connections in %s.\n", conf->filename);
+        exit(0);
+    }
+    
+    return worker_connections;
+}
 
 static void run_ev_loop(WorkerProcess *worker, TCPServer *server)
 {
     printf("Worker %d created. \n", worker->pid);
 
-    EventsSystem *es = events_system_init(MAXFDS);
+    EventsSystem *es = events_system_init(worker->max_fds);
     es->add(es, server->fd, EPOLLIN);
 
     while (1)
@@ -84,7 +101,7 @@ static void run_ev_loop(WorkerProcess *worker, TCPServer *server)
     }
 }
 
-WorkerProcess *worker_process_init(MasterProcess *master)
+WorkerProcess *worker_process_init(MasterProcess *master, ServerConfig *conf)
 {
     WorkerProcess *worker = (WorkerProcess *)malloc(sizeof(WorkerProcess));
     if (worker == NULL)
@@ -95,6 +112,7 @@ WorkerProcess *worker_process_init(MasterProcess *master)
 
     worker->pid = -1;
     worker->cpuid = -1;
+    worker->max_fds = get_max_fds(conf);
     worker->run_ev_loop = run_ev_loop;
 
     return worker;

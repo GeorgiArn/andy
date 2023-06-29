@@ -4,6 +4,8 @@
 
 #include "event.h"
 
+static size_t g_max_fds = 0;
+
 static void add(EventsSystem *es, int fd, uint32_t events)
 {
     struct epoll_event event;
@@ -41,7 +43,7 @@ static void del(EventsSystem *es, int fd)
 
 static size_t wait(EventsSystem *es)
 {
-    size_t nready = epoll_wait(es->epoll_fd, es->incoming_events, es->max_fds, -1);
+    size_t nready = epoll_wait(es->epoll_fd, es->incoming_events, g_max_fds, -1);
     return nready;
 }
 
@@ -57,13 +59,14 @@ EventsSystem *events_system_init(size_t max_fds)
     int fd = epoll_create1(0);
 
     es->epoll_fd = fd;
-    es->max_fds = max_fds;
     es->incoming_events = calloc(max_fds, sizeof(struct epoll_event));
 
     es->add = add;
     es->mod = mod;
     es->del = del;
     es->wait = wait;
+
+    g_max_fds = max_fds;
     
     return es;
 }
